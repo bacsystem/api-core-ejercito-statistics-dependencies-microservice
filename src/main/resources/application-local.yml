@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@test-scan.ep.mil.pe:1521:DEVBDEP
+    username: ESTADISTICA_COMPE
+    password: ESTADISTICA
+    driver-class-name: oracle.jdbc.OracleDriver
+
+#cloud configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance-id:${random.value}}

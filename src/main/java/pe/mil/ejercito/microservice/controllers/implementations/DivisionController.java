@@ -1,0 +1,112 @@
+package pe.mil.ejercito.microservice.controllers.implementations;
+
+import lombok.extern.log4j.Log4j2;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.support.WebExchangeBindException;
+import pe.mil.ejercito.lib.repository.dtos.DivisionDto;
+import pe.mil.ejercito.lib.repository.services.contracts.IDivisionDomainService;
+import pe.mil.ejercito.lib.utils.controllers.base.ReactorControllerBase;
+import pe.mil.ejercito.lib.utils.dto.*;
+import pe.mil.ejercito.microservice.controllers.contracts.IDivisionController;
+import reactor.core.publisher.Mono;
+
+import javax.validation.Valid;
+
+import static pe.mil.ejercito.microservice.constants.LoggerConstant.*;
+import static pe.mil.ejercito.microservice.constants.ProcessConstant.*;
+
+/**
+ * DivisionController
+ * <p>
+ * DivisionController class.
+ * <p>
+ * THIS COMPONENT WAS BUILT ACCORDING TO THE DEVELOPMENT STANDARDS
+ * AND THE EJERCITO DEL PERÚ APPLICATION DEVELOPMENT PROCEDURE AND IS PROTECTED
+ * BY THE LAWS OF INTELLECTUAL PROPERTY AND COPYRIGHT...
+ *
+ * @author ejercito
+ * @author cbaciliod@ejercito.mil.pe
+ * @since 25/02/2024
+ */
+
+
+@Log4j2
+@RestController
+@RequestMapping(path = MICROSERVICE_PATH_CONTEXT, produces = MediaType.APPLICATION_JSON_VALUE)
+public class DivisionController extends ReactorControllerBase implements IDivisionController {
+
+    private final IDivisionDomainService service;
+
+    public DivisionController(final Response response, IDivisionDomainService service) {
+        super(response, "DivisionController");
+        this.service = service;
+    }
+
+    @Override
+    @GetMapping(path = FIND_ALL_DIVISION_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<Object>> doOnFindAllExecute(@RequestParam(required = false) String status,
+                                                           @RequestParam(required = false, defaultValue = "10") String limit,
+                                                           @RequestParam(required = false, defaultValue = "1") String page) {
+        final PageableDto pageableDivision = PageableDto.builder().build();
+        return this.service.getAllEntities(status, limit, page, pageableDivision)
+                .flatMap(current -> super.response(ProcessResponse.success(new PageableResponse<>(current, MetadataDto.builder()
+                        .pageable(pageableDivision)
+                        .build()))))
+                .onErrorResume(WebExchangeBindException.class, Mono::error)
+                .doOnSuccess(success -> log.debug(MICROSERVICE_CONTROLLER_DOMAIN_ENTITY_FIND_ALL_FORMAT_SUCCESS))
+                .doOnError(throwable -> log.error(throwable.getMessage()));
+    }
+
+    @Override
+    @GetMapping(path = FIND_BY_ID_DIVISION_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<Object>> doOnFindByIdExecute(@PathVariable(value = "id") Long id) {
+        return this.service.getByIdEntity(id)
+                .flatMap(current -> super.response(ProcessResponse.success(new GenericResponse<>(current))))
+                .onErrorResume(WebExchangeBindException.class, Mono::error)
+                .doOnSuccess(success -> log.debug(MICROSERVICE_CONTROLLER_DOMAIN_ENTITY_FIND_BY_ID_FORMAT_SUCCESS))
+                .doOnError(throwable -> log.error(throwable.getMessage()));
+
+    }
+
+    @Override
+    @GetMapping(path = FIND_BY_UUID_DIVISION_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<Object>> doOnFindByUuIdExecute(@PathVariable(value = "uuid") String uuid) {
+        return this.service.getByUuIdEntity(uuid)
+                .flatMap(current -> super.response(ProcessResponse.success(new GenericResponse<>(current))))
+                .onErrorResume(WebExchangeBindException.class, Mono::error)
+                .doOnSuccess(success -> log.debug(MICROSERVICE_CONTROLLER_DOMAIN_ENTITY_FIND_BY_UUID_FORMAT_SUCCESS))
+                .doOnError(throwable -> log.error(throwable.getMessage()));
+    }
+
+    @Override
+    @PostMapping(path = CREATE_DIVISION_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<Object>> doOnCreateExecute(@RequestBody @Valid DivisionDto dto) {
+        return this.service.saveEntity(dto)
+                .flatMap(current -> super.response(ProcessResponse.success(new GenericResponse<>(current))))
+                .onErrorResume(WebExchangeBindException.class, Mono::error)
+                .doOnSuccess(success -> log.debug(MICROSERVICE_CONTROLLER_DOMAIN_ENTITY_CREATE_FORMAT_SUCCESS))
+                .doOnError(throwable -> log.error(throwable.getMessage()));
+    }
+
+    @Override
+    @PutMapping(path = UPDATE_DIVISION_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<Object>> doOnUpdateExecute(@RequestBody @Valid DivisionDto dto) {
+        return this.service.updateEntity(dto)
+                .flatMap(current -> super.response(ProcessResponse.success(new GenericResponse<>(current))))
+                .onErrorResume(WebExchangeBindException.class, Mono::error)
+                .doOnSuccess(success -> log.debug(MICROSERVICE_CONTROLLER_DOMAIN_ENTITY_UPDATE_FORMAT_SUCCESS))
+                .doOnError(throwable -> log.error(throwable.getMessage()));
+    }
+
+    @Override
+    @DeleteMapping(path = DELETE_DIVISION_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Mono<ResponseEntity<Object>> doOnDeleteExecute(@PathVariable(value = "uuid") String uuid) {
+        return this.service.deleteByUuIdEntity(uuid)
+                .flatMap(current -> super.response(ProcessResponse.success(new GenericResponse<>(current))))
+                .onErrorResume(WebExchangeBindException.class, Mono::error)
+                .doOnSuccess(success -> log.debug(MICROSERVICE_CONTROLLER_DOMAIN_ENTITY_DELETE_FORMAT_SUCCESS))
+                .doOnError(throwable -> log.error(throwable.getMessage()));
+    }
+}
